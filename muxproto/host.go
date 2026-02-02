@@ -26,7 +26,7 @@ func ToManagerURL(path string, ws ...bool) *url.URL {
 	return buildURL(ManagerDomain, path, ws)
 }
 
-func ServerToBrokerURL(brokerID int64, path string, ws ...bool) *url.URL {
+func ManagerToBrokerURL(brokerID int64, path string, ws ...bool) *url.URL {
 	host := ResolveHostname(brokerID, BrokerDomain)
 	return buildURL(host, path, ws)
 }
