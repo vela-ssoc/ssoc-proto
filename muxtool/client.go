@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httputil"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 type Client struct {
 	dial muxproto.Dialer
 	wsd  *websocket.Dialer
+	rpx  *httputil.ReverseProxy
 	cli  *http.Client
 	log  *slog.Logger
 }
@@ -31,10 +33,17 @@ func NewClient(dial muxproto.Dialer, log *slog.Logger) Client {
 		HandshakeTimeout:  10 * time.Second,
 		EnableCompression: true,
 	}
+	rpx := &httputil.ReverseProxy{
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.SetXForwarded()
+		},
+		Transport: trp,
+	}
 
 	return Client{
 		dial: dial,
 		wsd:  wsd,
+		rpx:  rpx,
 		cli:  cli,
 		log:  log,
 	}
@@ -53,6 +62,10 @@ func (c Client) Transport() http.RoundTripper {
 // Do 某些三方库需要，不建议业务开发者拿到该返回值后调用业务接口。
 func (c Client) Do(r *http.Request) (*http.Response, error) {
 	return c.cli.Do(r)
+}
+
+func (c Client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	c.rpx.ServeHTTP(w, r)
 }
 
 // JSON 请求时无 body，但是响应数据是 JSON 报文。
