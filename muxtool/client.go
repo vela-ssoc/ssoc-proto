@@ -150,9 +150,9 @@ func (c Client) send(r *http.Request) (*http.Response, error) {
 	respErr.RawBody = raw
 
 	if c.isApplicationJSON(res.Header.Get("Content-Type")) {
-		berr := new(BusinessErrorBody)
-		if err = json.Unmarshal(raw, berr); err == nil {
-			respErr.BusinessError = berr
+		details := new(ProblemDetails)
+		if err = json.Unmarshal(raw, details); err == nil {
+			respErr.Details = details
 		}
 	}
 
