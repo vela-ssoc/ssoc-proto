@@ -67,6 +67,14 @@ type BrokerAuthResponse struct {
 	Config *BrokerBootConfig `json:"config"`
 }
 
+func (r BrokerAuthResponse) Err() error {
+	if r.Code/100 == 2 {
+		return nil
+	}
+
+	return &AuthError{Code: r.Code, Text: r.Text}
+}
+
 type BrokerBootConfig struct {
 	URI string `json:"uri"`
 }
