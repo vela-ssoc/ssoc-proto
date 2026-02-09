@@ -47,3 +47,35 @@ func (dr *delimReader) Read(p []byte) (int, error) {
 
 	return n, err
 }
+
+type BrokerAuthRequest struct {
+	Secret     string   `json:"secret"   validate:"required"` // broker 密钥
+	Semver     string   `json:"semver"   validate:"required"` // broker 版本号
+	Inet       string   `json:"inet"     validate:"required"`
+	Goos       string   `json:"goos"     validate:"required"`
+	Goarch     string   `json:"goarch"   validate:"required"`
+	PID        int      `json:"pid"`
+	Hostname   string   `json:"hostname"`
+	Workdir    string   `json:"workdir"`
+	Executable string   `json:"executable"`
+	Args       []string `json:"args"`
+}
+
+type BrokerAuthResponse struct {
+	Code   int               `json:"code"`
+	Text   string            `json:"text"`
+	Config *BrokerBootConfig `json:"config"`
+}
+
+type BrokerBootConfig struct {
+	URI string `json:"uri"`
+}
+
+type AuthError struct {
+	Code int    `json:"code"`
+	Text string `json:"text"`
+}
+
+func (a *AuthError) Error() string {
+	return a.Text
+}
