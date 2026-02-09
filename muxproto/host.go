@@ -2,7 +2,6 @@ package muxproto
 
 import (
 	"net/url"
-	"strconv"
 )
 
 const (
@@ -11,13 +10,11 @@ const (
 	BrokerDomain  = "broker.ssoc.internal"
 )
 
-func ResolveHostname(id int64, domain string) string {
-	sid := strconv.FormatInt(id, 10)
-
-	return sid + "." + domain
+func ResolveHostname(id, domain string) string {
+	return id + "." + domain
 }
 
-func ToAgentURL(agentID int64, path string, ws ...bool) *url.URL {
+func ToAgentURL(agentID, path string, ws ...bool) *url.URL {
 	host := ResolveHostname(agentID, AgentDomain)
 	return buildURL(host, path, ws)
 }
@@ -26,7 +23,7 @@ func ToManagerURL(path string, ws ...bool) *url.URL {
 	return buildURL(ManagerDomain, path, ws)
 }
 
-func ManagerToBrokerURL(brokerID int64, path string, ws ...bool) *url.URL {
+func ManagerToBrokerURL(brokerID, path string, ws ...bool) *url.URL {
 	host := ResolveHostname(brokerID, BrokerDomain)
 	return buildURL(host, path, ws)
 }
