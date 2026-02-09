@@ -105,7 +105,9 @@ func (lrw *limitReadWriter) Write(p []byte) (int, error) {
 		}
 
 		n, err := lrw.under.Write(p[written : written+tokens])
-		written += n
+		if n > 0 {
+			written += n
+		}
 		if err != nil {
 			return written, err
 		}
