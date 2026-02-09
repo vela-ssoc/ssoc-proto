@@ -76,7 +76,7 @@ func (r BrokerAuthResponse) Err() error {
 }
 
 type BrokerBootConfig struct {
-	URI string `json:"uri"`
+	URI string `json:"uri" validate:"mongodb_connection_string"`
 }
 
 type AuthError struct {
