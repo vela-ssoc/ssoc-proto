@@ -16,9 +16,7 @@ type DialConfig struct {
 	// Protocols 连接协议：
 	// - smux
 	// - yamux
-	//
-	// 不填写默认 smux 协议。
-	Protocol string
+	Protocols []string
 
 	// Dialer websocket 拨号器。
 	Dialer *websocket.Dialer
@@ -34,21 +32,30 @@ type DialConfig struct {
 
 func (dc DialConfig) DialContext(parent context.Context, addresses []string) (Muxer, error) {
 	addresses = dc.deduplicate(addresses)
-	attrs := []any{"addresses", addresses}
+	protocols := dc.deduplicate(dc.Protocols)
+	if len(protocols) == 0 {
+		protocols = []string{"smux", "yamux"}
+	}
+
+	attrs := []any{"addresses", addresses, "protocols", protocols}
 	dc.log().Debug("准备连接服务端", attrs...)
 
 	var errs []error
-	for _, addr := range addresses {
-		msgs := append(attrs, "address", addr)
-		mux, err := dc.dialContext(parent, addr)
-		if err == nil {
-			dc.log().Info("连接服务成功", msgs...)
-			return mux, nil
+
+	for _, proto := range protocols {
+		for _, addr := range addresses {
+			msgs := append(attrs, "address", addr, "protocol", proto)
+			mux, err := dc.dialContext(parent, proto, addr)
+			if err == nil {
+				dc.log().Info("连接服务成功", msgs...)
+				return mux, nil
+			}
+			errs = append(errs, err)
+			msgs = append(msgs, "error", err)
+			dc.log().Warn("连接服务端出错", msgs...)
 		}
-		errs = append(errs, err)
-		msgs = append(msgs, "error", err)
-		dc.log().Warn("连接服务端出错", msgs...)
 	}
+
 	err := errors.Join(errs...)
 	if err == nil {
 		err = errors.New("连接地址不能为空")
@@ -59,8 +66,7 @@ func (dc DialConfig) DialContext(parent context.Context, addresses []string) (Mu
 	return nil, err
 }
 
-func (dc DialConfig) dialContext(parent context.Context, address string) (Muxer, error) {
-	proto := dc.Protocol
+func (dc DialConfig) dialContext(parent context.Context, proto, address string) (Muxer, error) {
 	if proto != "yamux" {
 		proto = "smux"
 	}
