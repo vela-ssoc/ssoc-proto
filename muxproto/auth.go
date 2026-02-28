@@ -79,6 +79,8 @@ type BrokerBootConfig struct {
 	URI string `json:"uri" validate:"mongodb_connection_string"`
 }
 
+type AgentBootConfig struct{}
+
 type AuthError struct {
 	Code int    `json:"code"`
 	Text string `json:"text"`
