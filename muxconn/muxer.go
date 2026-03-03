@@ -27,6 +27,8 @@ type Muxer interface {
 	// bps = rate.Inf 代表不限制速率。
 	SetLimit(bps rate.Limit)
 
+	Streams() []Conn
+
 	// NumStreams 返回累计创建的总连接数和当前活跃的连接数。
 	NumStreams() (cumulative, active int64)
 
