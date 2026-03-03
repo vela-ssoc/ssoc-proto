@@ -13,6 +13,7 @@ import (
 type yamuxConn struct {
 	parent *yamuxSession
 	stream *yamux.Stream
+	stats  *streamStats
 	limit  io.ReadWriter
 	closed atomic.Bool
 	cancel context.CancelCauseFunc
@@ -20,14 +21,14 @@ type yamuxConn struct {
 
 func (c *yamuxConn) Read(b []byte) (int, error) {
 	n, err := c.limit.Read(b)
-	c.parent.traffic.incrRX(n)
+	c.stats.incrRX(n)
 
 	return n, err
 }
 
 func (c *yamuxConn) Write(b []byte) (int, error) {
 	n, err := c.limit.Write(b)
-	c.parent.traffic.incrTX(n)
+	c.stats.incrTX(n)
 
 	return n, err
 }
@@ -37,11 +38,10 @@ func (c *yamuxConn) Close() error {
 		return net.ErrClosed
 	}
 
+	c.parent.stats.delConn(c)
 	c.cancel(net.ErrClosed)
-	err := c.stream.Close()
-	c.parent.streams.closeOne()
 
-	return err
+	return c.stream.Close()
 }
 
 func (c *yamuxConn) LocalAddr() net.Addr                { return c.stream.LocalAddr() }
@@ -49,3 +49,4 @@ func (c *yamuxConn) RemoteAddr() net.Addr               { return c.stream.Remote
 func (c *yamuxConn) SetDeadline(t time.Time) error      { return c.stream.SetDeadline(t) }
 func (c *yamuxConn) SetReadDeadline(t time.Time) error  { return c.stream.SetReadDeadline(t) }
 func (c *yamuxConn) SetWriteDeadline(t time.Time) error { return c.stream.SetWriteDeadline(t) }
+func (c *yamuxConn) Stats() *StreamStats                { return c.stats.stats() }

@@ -14,9 +14,8 @@ func NewVela(parent context.Context, conn net.Conn, cfg *smux.Config, serverSide
 	}
 
 	mux := &velaSession{
-		traffic: new(trafficStat),
+		stats:   newMUXStreamStats(),
 		limiter: newUnlimit(),
-		streams: new(streamStat),
 		parent:  parent,
 	}
 	if serverSide {
@@ -30,9 +29,8 @@ func NewVela(parent context.Context, conn net.Conn, cfg *smux.Config, serverSide
 
 type velaSession struct {
 	session *smux.Session
-	traffic *trafficStat
+	stats   *muxStreamStats
 	limiter *rateLimiter
-	streams *streamStat
 	parent  context.Context
 }
 
@@ -47,8 +45,9 @@ func (m *velaSession) RemoteAddr() net.Addr       { return m.session.RemoteAddr(
 func (m *velaSession) IsClosed() bool             { return m.session.IsClosed() }
 func (m *velaSession) Limit() rate.Limit          { return m.limiter.Limit() }
 func (m *velaSession) SetLimit(bps rate.Limit)    { m.limiter.SetLimit(bps) }
-func (m *velaSession) NumStreams() (int64, int64) { return m.streams.Load() }
-func (m *velaSession) Traffic() (uint64, uint64)  { return m.traffic.Load() }
+func (m *velaSession) NumStreams() (int64, int64) { return m.stats.numStreams() }
+func (m *velaSession) Traffic() (uint64, uint64)  { return m.stats.mux.load() }
+func (m *velaSession) Streams() []Conn            { return m.stats.actives() }
 
 func (m *velaSession) Library() (string, string) {
 	return "vela", "github.com/vela-ssoc/vela-common-mba/smux"
@@ -59,7 +58,6 @@ func (m *velaSession) newConn(stm *smux.Stream, err error) (net.Conn, error) {
 		return nil, err
 	}
 
-	m.streams.openOne()
 	ctx, cancel := context.WithCancelCause(m.parent)
 	limit := m.limiter.warpReadWriter(ctx, stm)
 
@@ -69,6 +67,8 @@ func (m *velaSession) newConn(stm *smux.Stream, err error) (net.Conn, error) {
 		limit:  limit,
 		cancel: cancel,
 	}
+	stats := m.stats.putConn(conn)
+	conn.stats = stats
 
 	return conn, nil
 }

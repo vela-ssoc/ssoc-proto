@@ -15,9 +15,8 @@ func NewYaMUX(parent context.Context, conn net.Conn, cfg *yamux.Config, serverSi
 
 	var err error
 	mux := &yamuxSession{
-		traffic: new(trafficStat),
+		stats:   newMUXStreamStats(),
 		limiter: newUnlimit(),
-		streams: new(streamStat),
 		parent:  parent,
 	}
 	if serverSide {
@@ -34,9 +33,8 @@ func NewYaMUX(parent context.Context, conn net.Conn, cfg *yamux.Config, serverSi
 
 type yamuxSession struct {
 	session *yamux.Session
-	traffic *trafficStat
+	stats   *muxStreamStats
 	limiter *rateLimiter
-	streams *streamStat
 	parent  context.Context
 }
 
@@ -51,16 +49,16 @@ func (m *yamuxSession) RemoteAddr() net.Addr       { return m.session.RemoteAddr
 func (m *yamuxSession) IsClosed() bool             { return m.session.IsClosed() }
 func (m *yamuxSession) Limit() rate.Limit          { return m.limiter.Limit() }
 func (m *yamuxSession) SetLimit(bps rate.Limit)    { m.limiter.SetLimit(bps) }
-func (m *yamuxSession) NumStreams() (int64, int64) { return m.streams.Load() }
-func (m *yamuxSession) Traffic() (uint64, uint64)  { return m.traffic.Load() }
+func (m *yamuxSession) NumStreams() (int64, int64) { return m.stats.numStreams() }
+func (m *yamuxSession) Traffic() (uint64, uint64)  { return m.stats.mux.load() }
 func (m *yamuxSession) Library() (string, string)  { return "yamux", "github.com/hashicorp/yamux" }
+func (m *yamuxSession) Streams() []Conn            { return m.stats.actives() }
 
 func (m *yamuxSession) newConn(stm *yamux.Stream, err error) (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
 
-	m.streams.openOne()
 	ctx, cancel := context.WithCancelCause(m.parent)
 	limit := m.limiter.warpReadWriter(ctx, stm)
 
@@ -70,6 +68,8 @@ func (m *yamuxSession) newConn(stm *yamux.Stream, err error) (net.Conn, error) {
 		limit:  limit,
 		cancel: cancel,
 	}
+	stats := m.stats.putConn(conn)
+	conn.stats = stats
 
 	return conn, nil
 }

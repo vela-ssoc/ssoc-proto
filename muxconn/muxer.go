@@ -36,3 +36,8 @@ type Muxer interface {
 	// Library 底层连接所使用的库，方便排查调试。
 	Library() (name, module string)
 }
+
+type Conn interface {
+	net.Conn
+	Stats() *StreamStats
+}

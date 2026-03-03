@@ -15,9 +15,8 @@ func NewSMUX(parent context.Context, conn net.Conn, cfg *smux.Config, serverSide
 
 	var err error
 	mux := &smuxSession{
-		traffic: new(trafficStat),
+		stats:   newMUXStreamStats(),
 		limiter: newUnlimit(),
-		streams: new(streamStat),
 		parent:  parent,
 	}
 	if serverSide {
@@ -34,9 +33,8 @@ func NewSMUX(parent context.Context, conn net.Conn, cfg *smux.Config, serverSide
 
 type smuxSession struct {
 	session *smux.Session
-	traffic *trafficStat
+	stats   *muxStreamStats
 	limiter *rateLimiter
-	streams *streamStat
 	parent  context.Context
 }
 
@@ -51,16 +49,16 @@ func (m *smuxSession) RemoteAddr() net.Addr       { return m.session.RemoteAddr(
 func (m *smuxSession) IsClosed() bool             { return m.session.IsClosed() }
 func (m *smuxSession) Limit() rate.Limit          { return m.limiter.Limit() }
 func (m *smuxSession) SetLimit(bps rate.Limit)    { m.limiter.SetLimit(bps) }
-func (m *smuxSession) NumStreams() (int64, int64) { return m.streams.Load() }
-func (m *smuxSession) Traffic() (uint64, uint64)  { return m.traffic.Load() }
+func (m *smuxSession) NumStreams() (int64, int64) { return m.stats.numStreams() }
+func (m *smuxSession) Traffic() (uint64, uint64)  { return m.stats.mux.load() }
 func (m *smuxSession) Library() (string, string)  { return "smux", "github.com/xtaci/smux" }
+func (m *smuxSession) Streams() []Conn            { return m.stats.actives() }
 
 func (m *smuxSession) newConn(stm *smux.Stream, err error) (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
 
-	m.streams.openOne()
 	ctx, cancel := context.WithCancelCause(m.parent)
 	limit := m.limiter.warpReadWriter(ctx, stm)
 
@@ -70,6 +68,8 @@ func (m *smuxSession) newConn(stm *smux.Stream, err error) (net.Conn, error) {
 		limit:  limit,
 		cancel: cancel,
 	}
+	stats := m.stats.putConn(conn)
+	conn.stats = stats
 
 	return conn, nil
 }

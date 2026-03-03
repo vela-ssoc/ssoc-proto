@@ -13,6 +13,7 @@ import (
 type velaConn struct {
 	parent *velaSession
 	stream *smux.Stream
+	stats  *streamStats
 	limit  io.ReadWriter
 	closed atomic.Bool
 	cancel context.CancelCauseFunc
@@ -20,14 +21,14 @@ type velaConn struct {
 
 func (c *velaConn) Read(b []byte) (int, error) {
 	n, err := c.limit.Read(b)
-	c.parent.traffic.incrRX(n)
+	c.stats.incrRX(n)
 
 	return n, err
 }
 
 func (c *velaConn) Write(b []byte) (int, error) {
 	n, err := c.limit.Write(b)
-	c.parent.traffic.incrTX(n)
+	c.stats.incrTX(n)
 
 	return n, err
 }
@@ -37,11 +38,10 @@ func (c *velaConn) Close() error {
 		return net.ErrClosed
 	}
 
+	c.parent.stats.delConn(c)
 	c.cancel(net.ErrClosed)
-	err := c.stream.Close()
-	c.parent.streams.closeOne()
 
-	return err
+	return c.stream.Close()
 }
 
 func (c *velaConn) LocalAddr() net.Addr                { return c.stream.LocalAddr() }
@@ -49,3 +49,4 @@ func (c *velaConn) RemoteAddr() net.Addr               { return c.stream.RemoteA
 func (c *velaConn) SetDeadline(t time.Time) error      { return c.stream.SetDeadline(t) }
 func (c *velaConn) SetReadDeadline(t time.Time) error  { return c.stream.SetReadDeadline(t) }
 func (c *velaConn) SetWriteDeadline(t time.Time) error { return c.stream.SetWriteDeadline(t) }
+func (c *velaConn) Stats() *StreamStats                { return c.stats.stats() }
