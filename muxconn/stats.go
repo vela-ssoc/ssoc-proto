@@ -46,7 +46,7 @@ func (s *streamStats) incrTX(n int) {
 
 func (s *streamStats) stats() *StreamStats {
 	ss := &StreamStats{EstablishedAt: s.est}
-	ss.RX, ss.TX = s.mux.load()
+	ss.RX, ss.TX = s.stm.load()
 
 	return ss
 }
