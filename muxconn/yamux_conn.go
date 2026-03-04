@@ -44,3 +44,4 @@ func (c *yamuxConn) SetDeadline(t time.Time) error      { return c.stream.SetDea
 func (c *yamuxConn) SetReadDeadline(t time.Time) error  { return c.stream.SetReadDeadline(t) }
 func (c *yamuxConn) SetWriteDeadline(t time.Time) error { return c.stream.SetWriteDeadline(t) }
 func (c *yamuxConn) Stats() *StreamStats                { return c.stats.stats() }
+func (c *yamuxConn) initStats(s *streamStats)           { c.stats = s }

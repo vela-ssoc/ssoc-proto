@@ -68,8 +68,7 @@ func (m *smuxSession) newConn(stm *smux.Stream, err error) (*smuxConn, error) {
 		limit:  limit,
 		cancel: cancel,
 	}
-	stats := m.stats.putConn(conn)
-	conn.stats = stats
+	m.stats.putConn(conn)
 
 	return conn, nil
 }

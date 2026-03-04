@@ -42,4 +42,5 @@ type Muxer interface {
 type Streamer interface {
 	net.Conn
 	Stats() *StreamStats
+	initStats(s *streamStats)
 }

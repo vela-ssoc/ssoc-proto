@@ -47,27 +47,31 @@ func (s *streamStats) incrTX(n int) {
 }
 
 func (s *streamStats) stats() *StreamStats {
-	ss := &StreamStats{ID: s.id, EstablishedAt: s.est}
-	ss.RX, ss.TX = s.stm.load()
+	rx, tx := s.stm.load()
 
-	return ss
+	return &StreamStats{
+		ID:            s.id,
+		RX:            rx,
+		TX:            tx,
+		EstablishedAt: s.est,
+	}
 }
 
 func newMUXStreamStats() *muxStreamStats {
 	return &muxStreamStats{
 		mux:     new(trafficStats),
-		streams: make(map[Streamer]*streamStats, 8),
+		streams: make(map[Streamer]struct{}, 8),
 	}
 }
 
 type muxStreamStats struct {
-	mux     *trafficStats             // 总线数据传输量（共享）
-	mutex   sync.RWMutex              // streams 读写锁
-	count   uint64                    // 历史累计子流总数
-	streams map[Streamer]*streamStats // 当前活跃的子流信息
+	mux     *trafficStats         // 总线数据传输量（共享）
+	mutex   sync.RWMutex          // streams 读写锁
+	count   uint64                // 历史累计子流总数
+	streams map[Streamer]struct{} // 当前活跃的子流信息
 }
 
-func (s *muxStreamStats) putConn(c Streamer) *streamStats {
+func (s *muxStreamStats) putConn(c Streamer) {
 	stats := &streamStats{
 		mux: s.mux,
 		stm: new(trafficStats),
@@ -79,9 +83,8 @@ func (s *muxStreamStats) putConn(c Streamer) *streamStats {
 
 	s.count++
 	stats.id = s.count
-	s.streams[c] = stats
-
-	return stats
+	c.initStats(stats)
+	s.streams[c] = struct{}{}
 }
 
 func (s *muxStreamStats) delConn(c Streamer) {

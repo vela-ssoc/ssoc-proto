@@ -68,8 +68,7 @@ func (m *yamuxSession) newConn(stm *yamux.Stream, err error) (net.Conn, error) {
 		limit:  limit,
 		cancel: cancel,
 	}
-	stats := m.stats.putConn(conn)
-	conn.stats = stats
+	m.stats.putConn(conn)
 
 	return conn, nil
 }

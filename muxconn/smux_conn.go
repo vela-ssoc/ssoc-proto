@@ -44,3 +44,4 @@ func (c *smuxConn) SetDeadline(t time.Time) error      { return c.stream.SetDead
 func (c *smuxConn) SetReadDeadline(t time.Time) error  { return c.stream.SetReadDeadline(t) }
 func (c *smuxConn) SetWriteDeadline(t time.Time) error { return c.stream.SetWriteDeadline(t) }
 func (c *smuxConn) Stats() *StreamStats                { return c.stats.stats() }
+func (c *smuxConn) initStats(s *streamStats)           { c.stats = s }

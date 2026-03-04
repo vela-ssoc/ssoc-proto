@@ -44,3 +44,4 @@ func (c *velaConn) SetDeadline(t time.Time) error      { return c.stream.SetDead
 func (c *velaConn) SetReadDeadline(t time.Time) error  { return c.stream.SetReadDeadline(t) }
 func (c *velaConn) SetWriteDeadline(t time.Time) error { return c.stream.SetWriteDeadline(t) }
 func (c *velaConn) Stats() *StreamStats                { return c.stats.stats() }
+func (c *velaConn) initStats(s *streamStats)           { c.stats = s }
