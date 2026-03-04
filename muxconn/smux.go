@@ -52,9 +52,9 @@ func (m *smuxSession) SetLimit(bps rate.Limit)    { m.limiter.SetLimit(bps) }
 func (m *smuxSession) NumStreams() (int64, int64) { return m.stats.numStreams() }
 func (m *smuxSession) Traffic() (uint64, uint64)  { return m.stats.mux.load() }
 func (m *smuxSession) Library() (string, string)  { return "smux", "github.com/xtaci/smux" }
-func (m *smuxSession) Streams() []Conn            { return m.stats.actives() }
+func (m *smuxSession) Streams() []Streamer        { return m.stats.actives() }
 
-func (m *smuxSession) newConn(stm *smux.Stream, err error) (net.Conn, error) {
+func (m *smuxSession) newConn(stm *smux.Stream, err error) (*smuxConn, error) {
 	if err != nil {
 		return nil, err
 	}

@@ -47,7 +47,7 @@ func (m *velaSession) Limit() rate.Limit          { return m.limiter.Limit() }
 func (m *velaSession) SetLimit(bps rate.Limit)    { m.limiter.SetLimit(bps) }
 func (m *velaSession) NumStreams() (int64, int64) { return m.stats.numStreams() }
 func (m *velaSession) Traffic() (uint64, uint64)  { return m.stats.mux.load() }
-func (m *velaSession) Streams() []Conn            { return m.stats.actives() }
+func (m *velaSession) Streams() []Streamer        { return m.stats.actives() }
 
 func (m *velaSession) Library() (string, string) {
 	return "vela", "github.com/vela-ssoc/vela-common-mba/smux"

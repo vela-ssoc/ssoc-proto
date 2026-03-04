@@ -54,18 +54,18 @@ func (s *streamStats) stats() *StreamStats {
 func newMUXStreamStats() *muxStreamStats {
 	return &muxStreamStats{
 		mux:     new(trafficStats),
-		streams: make(map[Conn]*streamStats, 8),
+		streams: make(map[Streamer]*streamStats, 8),
 	}
 }
 
 type muxStreamStats struct {
-	mux     *trafficStats         // 总线数据传输量（共享）
-	mutex   sync.RWMutex          // streams 读写锁
-	count   uint64                // 历史累计子流总数
-	streams map[Conn]*streamStats // 当前活跃的子流信息
+	mux     *trafficStats             // 总线数据传输量（共享）
+	mutex   sync.RWMutex              // streams 读写锁
+	count   uint64                    // 历史累计子流总数
+	streams map[Streamer]*streamStats // 当前活跃的子流信息
 }
 
-func (s *muxStreamStats) putConn(c Conn) *streamStats {
+func (s *muxStreamStats) putConn(c Streamer) *streamStats {
 	stats := &streamStats{
 		mux: s.mux,
 		stm: new(trafficStats),
@@ -81,18 +81,18 @@ func (s *muxStreamStats) putConn(c Conn) *streamStats {
 	return stats
 }
 
-func (s *muxStreamStats) delConn(c Conn) {
+func (s *muxStreamStats) delConn(c Streamer) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	delete(s.streams, c)
 }
 
-func (s *muxStreamStats) actives() []Conn {
+func (s *muxStreamStats) actives() []Streamer {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	ret := make([]Conn, 0, len(s.streams))
+	ret := make([]Streamer, 0, len(s.streams))
 	for c := range s.streams {
 		ret = append(ret, c)
 	}

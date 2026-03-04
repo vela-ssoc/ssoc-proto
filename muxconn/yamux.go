@@ -52,7 +52,7 @@ func (m *yamuxSession) SetLimit(bps rate.Limit)    { m.limiter.SetLimit(bps) }
 func (m *yamuxSession) NumStreams() (int64, int64) { return m.stats.numStreams() }
 func (m *yamuxSession) Traffic() (uint64, uint64)  { return m.stats.mux.load() }
 func (m *yamuxSession) Library() (string, string)  { return "yamux", "github.com/hashicorp/yamux" }
-func (m *yamuxSession) Streams() []Conn            { return m.stats.actives() }
+func (m *yamuxSession) Streams() []Streamer        { return m.stats.actives() }
 
 func (m *yamuxSession) newConn(stm *yamux.Stream, err error) (net.Conn, error) {
 	if err != nil {
