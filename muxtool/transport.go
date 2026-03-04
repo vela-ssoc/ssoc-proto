@@ -15,11 +15,10 @@ type muxTransport struct {
 
 func newTransport(dial muxproto.Dialer, log *slog.Logger) *muxTransport {
 	trp := &http.Transport{
-		DialContext:         dial.DialContext,
-		MaxIdleConns:        10,
-		MaxIdleConnsPerHost: 5,
-		MaxConnsPerHost:     50,
-		IdleConnTimeout:     time.Minute,
+		DialContext:     dial.DialContext,
+		MaxIdleConns:    5,
+		MaxConnsPerHost: 20,
+		IdleConnTimeout: time.Minute,
 	}
 
 	return &muxTransport{
