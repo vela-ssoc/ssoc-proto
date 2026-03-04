@@ -34,10 +34,6 @@ func (c *smuxConn) Write(b []byte) (int, error) {
 }
 
 func (c *smuxConn) Close() error {
-	if !c.closed.CompareAndSwap(false, true) {
-		return net.ErrClosed
-	}
-
 	c.parent.stats.delConn(c)
 	c.cancel(net.ErrClosed)
 
