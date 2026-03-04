@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net"
-	"sync/atomic"
 	"time"
 
 	"github.com/xtaci/smux"
@@ -15,7 +14,6 @@ type smuxConn struct {
 	stream *smux.Stream
 	stats  *streamStats
 	limit  io.ReadWriter
-	closed atomic.Bool
 	cancel context.CancelCauseFunc
 }
 

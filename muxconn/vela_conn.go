@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net"
-	"sync/atomic"
 	"time"
 
 	"github.com/vela-ssoc/vela-common-mba/smux"
@@ -15,7 +14,6 @@ type velaConn struct {
 	stream *smux.Stream
 	stats  *streamStats
 	limit  io.ReadWriter
-	closed atomic.Bool
 	cancel context.CancelCauseFunc
 }
 
@@ -34,10 +32,6 @@ func (c *velaConn) Write(b []byte) (int, error) {
 }
 
 func (c *velaConn) Close() error {
-	if !c.closed.CompareAndSwap(false, true) {
-		return net.ErrClosed
-	}
-
 	c.parent.stats.delConn(c)
 	c.cancel(net.ErrClosed)
 

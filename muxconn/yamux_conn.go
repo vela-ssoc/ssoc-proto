@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net"
-	"sync/atomic"
 	"time"
 
 	"github.com/hashicorp/yamux"
@@ -15,7 +14,6 @@ type yamuxConn struct {
 	stream *yamux.Stream
 	stats  *streamStats
 	limit  io.ReadWriter
-	closed atomic.Bool
 	cancel context.CancelCauseFunc
 }
 
@@ -34,10 +32,6 @@ func (c *yamuxConn) Write(b []byte) (int, error) {
 }
 
 func (c *yamuxConn) Close() error {
-	if !c.closed.CompareAndSwap(false, true) {
-		return net.ErrClosed
-	}
-
 	c.parent.stats.delConn(c)
 	c.cancel(net.ErrClosed)
 
