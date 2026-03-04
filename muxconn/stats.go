@@ -7,6 +7,7 @@ import (
 )
 
 type StreamStats struct {
+	ID            uint64    `json:"id"`
 	RX            uint64    `json:"rx"`
 	TX            uint64    `json:"tx"`
 	EstablishedAt time.Time `json:"established_at"`
@@ -25,6 +26,7 @@ func (s *trafficStats) incrRX(n uint64) { s.rx.Add(n) }
 func (s *trafficStats) incrTX(n uint64) { s.tx.Add(n) }
 
 type streamStats struct {
+	id  uint64        // ID
 	mux *trafficStats // 总线数据传输量（共享）
 	stm *trafficStats // 当前子流的数据传输量
 	est time.Time     // 建立连接的时间
@@ -45,7 +47,7 @@ func (s *streamStats) incrTX(n int) {
 }
 
 func (s *streamStats) stats() *StreamStats {
-	ss := &StreamStats{EstablishedAt: s.est}
+	ss := &StreamStats{ID: s.id, EstablishedAt: s.est}
 	ss.RX, ss.TX = s.stm.load()
 
 	return ss
@@ -76,6 +78,7 @@ func (s *muxStreamStats) putConn(c Streamer) *streamStats {
 	defer s.mutex.Unlock()
 
 	s.count++
+	stats.id = s.count
 	s.streams[c] = stats
 
 	return stats
