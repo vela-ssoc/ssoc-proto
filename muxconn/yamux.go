@@ -8,6 +8,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// NewYaMUX 基于 hashicorp/yamux 实现的多路复用。
 func NewYaMUX(parent context.Context, conn net.Conn, cfg *yamux.Config, serverSide bool) (Muxer, error) {
 	if parent == nil {
 		parent = context.Background()

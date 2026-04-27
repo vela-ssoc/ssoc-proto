@@ -8,6 +8,11 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// NewVela 实现旧版 SSOC tunnel 逻辑。
+// 该通道实现属于自维护项目，由于缺乏维护人力且仅在 SSOC 项目中使用，
+// 缺少全面的 BUG 反馈和使用案例，后续将逐步迁移并替换为开源 mux 组件实现。
+//
+// Deprecated: 推荐使用 NewSMUX 或 NewYaMUX 替代。
 func NewVela(parent context.Context, conn net.Conn, cfg *smux.Config, serverSide bool) Muxer {
 	if parent == nil {
 		parent = context.Background()

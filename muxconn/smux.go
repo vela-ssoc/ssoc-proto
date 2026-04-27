@@ -8,6 +8,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// NewSMUX 基于 xtaci/smux 实现的多路复用。
 func NewSMUX(parent context.Context, conn net.Conn, cfg *smux.Config, serverSide bool) (Muxer, error) {
 	if parent == nil {
 		parent = context.Background()
